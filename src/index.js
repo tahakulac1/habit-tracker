@@ -1,6 +1,8 @@
+const cors = require('cors')
 const express = require(`express`)
 const pool = require('./db')
 const app = express()
+app.use(cors())
 app.use(express.json())
 app.get(`/`, (req,res) => {
     res.send(`Habit Tracker API`)
@@ -48,7 +50,7 @@ app.put(`/habits/:id`, async(req, res) => {
     try {
         const id = parseInt(req.params.id)
         const result = await pool.query(
-            'UPDATE habits SET completed = true WHERE id = $1 RETURNING *',[id]
+            'UPDATE habits SET completed = NOT completed WHERE id = $1 RETURNING *',[id]
         )
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Habit not found'})
