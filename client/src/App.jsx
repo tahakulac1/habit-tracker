@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect,useRef } from 'react'
 import HabitForm from './components/HabitForm'
 import HabitList from './components/HabitList'
+import UndoToast from './components/UndoToast'
 import './App.css'
 
 const API_URL = 'http://localhost:3000'
 
 function App(){
   const [habits, setHabits] = useState([])
+  const [deletedHabit, setDeletedHabit] = useState(null)
+  const deleteTimerRef = useRef(null)
 
   useEffect(() => {
     fetch(`${API_URL}/habits`)
@@ -41,16 +44,41 @@ function App(){
     }
   }
 
-  const deleteHabit = async (id) => {
-    try {
-      await fetch(`${API_URL}/habits/${id}`, {
-        method: 'DELETE',
-      })
-      setHabits(habits.filter((h) => h.id !== id))
-    } catch (err) {
-      console.error('Error deleting habit', err)
+  const deleteHabit = (id) => {
+    if(deleteTimerRef.current && deletedHabit) {
+      clearTimeout(deleteTimerRef.current)
+      fetch(`${API_URL}/habits/${deletedHabit.id}`, { method: 'DELETE'})
+    }
+
+    const habitToDelete = habits.find((h) => h.id ===id)
+
+    setHabits((prev) => prev.filter((h) => h.id != id))
+    setDeletedHabit(habitToDelete)
+
+    deleteTimerRef.current = setTimeout(async () => {
+      try {
+        await fetch(`${API_URL}/habits/${id}`, {
+          method: 'DELETE',
+        })
+        setDeletedHabit(null)
+        deleteTimerRef.current = null
+      } catch (err) {
+        console.error('Error deleting Habit:', err)
+      }
+    }, 5000)
+  }
+  
+  const undoDelete = () => {
+    if (deleteTimerRef.current) {
+      clearTimeout(deleteTimerRef.current)
+      deleteTimerRef.current = null
+    }
+    if(deletedHabit) {
+      setHabits((prev) => [...prev, deletedHabit])
+      setDeletedHabit(null)
     }
   }
+     
   return (
     <div className="app-container">
      <h1> Habit Tracker</h1>
@@ -60,6 +88,7 @@ function App(){
        onToggle={toggleHabit}
        onDelete={deleteHabit}
        />
+       <UndoToast habit={deletedHabit} onUndo={undoDelete}/>
     </div>
   )
 }
