@@ -1,0 +1,46 @@
+version: '3.8'
+
+services: 
+  # database sevice
+  db:
+    image: postgres:15-alpine
+    container_name: habit-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: habits_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Backend service
+  backend:
+    build: .
+    container_name: habit-backend
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: mysecretpassword
+      DB_NAME: habits_db
+      DB_PORT: 5432
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  #Frontend Service
+  frontend:
+    build: ./client
+    container_name: habit-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
