@@ -2,6 +2,7 @@ const cors = require('cors')
 const express = require(`express`)
 const pool = require('./db')
 const app = express()
+const PORT = process.env.PORT || 3000
 app.use(cors())
 app.use(express.json())
 app.get(`/`, (req,res) => {
@@ -77,6 +78,6 @@ app.delete('/habits/:id', async(req, res) => {
         res.status(500).json({ error: 'db error'})
     }
 })
-app.listen(3000, () => {
-    console.log(`server is running on port 3000`)
+app.listen(PORT, () => {
+    console.log(`server is running on port ${PORT}`)
 })
