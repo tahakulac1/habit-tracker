@@ -72,7 +72,7 @@ app.delete('/habits/:id', async(req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Habit not found'})
         }
-        res.json({error: 'Habit deleted successfully'})
+        res.json({message: 'Habit deleted successfully'})
     } catch (err) {
         console.error(err)
         res.status(500).json({ error: 'db error'})

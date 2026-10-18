@@ -13,7 +13,12 @@ function App(){
 
   useEffect(() => {
     fetch(`${API_URL}/habits`)
-    .then((res) => res.json())
+    .then((res) => {
+        if(!res.ok) {
+          throw new Error(`Request failed with status ${res.status}`)
+        }
+        return res.json()
+      })
     .then((data) => setHabits(data))
     .catch((err) => console.error('Error fetching habits:', err))
   }, [])
@@ -25,6 +30,9 @@ function App(){
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title}),
       })
+      if(!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`)
+      }
       const newHabit = await res.json()
       setHabits([...habits, newHabit])
     } catch (err) {
@@ -37,6 +45,9 @@ function App(){
       const res = await fetch(`${API_URL}/habits/${id}`, {
         method: 'PUT',
       })
+      if(!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`)
+      }
       const updatedHabit = await res.json()
       setHabits(habits.map((h) => (h.id === id ? updatedHabit : h)))
     } catch (err) {
