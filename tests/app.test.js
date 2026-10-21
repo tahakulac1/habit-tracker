@@ -36,3 +36,19 @@ test('GET /habits returns the list of habits', async () => {
     expect(res.body).toHaveLength(1)
     expect(res.body[0].title).toBe('Drink water')
 })
+
+test('GET /habits/:id returns habit by id', async () => {
+
+    const created = await request(app).post('/habits').send({ title: 'Run 4 kilometers'})
+    const res = await request(app).get(`/habits/${created.body.id}`)
+    
+    expect(res.status).toBe(200)
+    expect(res.body.title).toBe('Run 4 kilometers')
+})
+
+test('GET /habits/:id returns 404: habit not found', async () => {
+    const res = await request(app).get('/habits/99999999')
+
+    expect(res.status).toBe(404)
+    expect(res.body.error).toBe('Habit not found')
+})
