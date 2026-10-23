@@ -7,6 +7,7 @@ beforeAll(async () => {
 })
 beforeEach(async () => {
     await pool.query('DELETE FROM habits')
+    await pool.query('DELETE FROM users')
 })
 afterAll(async () => {
     await pool.end()
@@ -26,6 +27,14 @@ test('GET / returns the API name', async () => {
     expect(res.body.title).toBe('habit1')
     expect(res.body.completed).toBe(false)
  
+})
+test('POST /auth/register creates a user', async () => {
+    const res = await request(app).post('/auth/register').send({username: 'Taha', email: 'taha@example.com', password: 'Secret123'})
+
+    expect(res.status).toBe(201)
+    expect(res.body.username).toBe('Taha')
+    expect(res.body.email).toBe('taha@example.com')
+    expect(res.body.password_hash).toBeUndefined()
 })
 test('GET /habits returns the list of habits', async () => {
     await request(app).post('/habits').send({ title: 'habit2'})
