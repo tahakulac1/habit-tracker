@@ -26,6 +26,9 @@ app.post(`/habits`, async(req, res) => {
 app.post(`/auth/register`, async(req, res) => {
     try {
         const { username, email, password } = req.body
+        if (!username || !email || !password) {
+            return res.status(400).json({ error: 'Username, email, and password are required'})
+        }
         const passwordHash = await bcrypt.hash(password, 10)
         const result = await pool.query(
             'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email',

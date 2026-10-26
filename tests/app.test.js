@@ -36,6 +36,12 @@ test('POST /auth/register creates a user', async () => {
     expect(res.body.email).toBe('taha@example.com')
     expect(res.body.password_hash).toBeUndefined()
 })
+test('POST /auth/register returns 400 for missing user information', async () => {
+    const res = await request(app).post('/auth/register').send({ email: 'berkay@example.com', password: 'Secret123'  })
+    
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('Username, email, and password are required')
+})
 test('GET /habits returns the list of habits', async () => {
     await request(app).post('/habits').send({ title: 'habit2'})
 
