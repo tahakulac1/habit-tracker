@@ -28,6 +28,8 @@ test('GET / returns the API name', async () => {
     expect(res.body.completed).toBe(false)
  
 })
+
+// start of tests of registration
 test('POST /auth/register creates a user', async () => {
     const res = await request(app).post('/auth/register').send({username: 'Taha', email: 'taha@example.com', password: 'Secret123'})
 
@@ -54,6 +56,16 @@ test('POST /auth/register returns 400 for invalid email', async () => {
     expect(res.status).toBe(400)
     expect(res.body.error).toBe('Invalid email address')
 })
+test('POST /auth/register returns 409 for used email', async () => {
+    const created = await request(app).post('/auth/register').send({ username: 'berkay',email: 'berkay@example.com', password: 'Secret123'})
+    const res = await request(app).post('/auth/register').send({ username: 'berkay',email: 'berkay@example.com', password: 'Secret123'})
+    
+    expect(created.status).toBe(201)
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe('Email is already registered')
+})
+// End of tests of registration
+
 test('GET /habits returns the list of habits', async () => {
     await request(app).post('/habits').send({ title: 'habit2'})
 
