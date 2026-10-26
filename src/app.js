@@ -2,6 +2,7 @@ const cors = require('cors')
 const express = require(`express`)
 const {pool} = require('./db');
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 const app = express()
 app.use(cors())
 app.use(express.json())
@@ -49,6 +50,30 @@ app.post(`/auth/register`, async(req, res) => {
         res.status(500).json({ error: 'db error'})
     }
 
+})
+app.post('/auth/login', async (req, res) => {
+    try {
+        const { email, password} = req.body
+        if (!email || !password) {
+            return res.status(400).json({error: 'Email and password are required'})
+        }
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email])
+        if(result.rows.length === 0) {
+            return res.status(401).json({error: 'Invalid email or password'})
+        }
+        const user = result.rows[0]
+        const isMatch = await bcrypt.compare(password, user.password_hash)
+        if(!isMatch) {
+            return res.status(401).json({error: 'Invalid email or password'})
+        }
+        const token = jwt.sign({ userId: user.id},
+            process.env.JWT_SECRET, { expiresIn: '1h'})
+        res.status(200).json({ token, user: { id: user.id, username: user.username, email: user.email } })
+        
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'db error'})
+    }
 })
 
 app.get(`/habits`, async(req, res) => {

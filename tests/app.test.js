@@ -66,6 +66,36 @@ test('POST /auth/register returns 409 for used email', async () => {
 })
 // End of tests of registration
 
+// Start of tests of login
+test('POST /auth/login returns 200 for a successful login', async () => {
+    await request(app).post('/auth/register').send({ username: 'berkay',email: 'berkay@example.com', password: 'Secret123'})
+    const res = await request(app).post('/auth/login').send({ email: 'berkay@example.com', password: 'Secret123'})
+    
+    expect(res.status).toBe(200)
+    expect(res.body.token).toBeDefined()
+    expect(res.body.user.email).toBe('berkay@example.com')
+})
+test('POST /auth/login returns 401 for a wrong password', async () => {
+    await request(app).post('/auth/register').send({ username: 'berkay',email: 'berkay@example.com', password: 'Secret123'})
+    const res = await request(app).post('/auth/login').send({ email: 'berkay@example.com', password: 'secret123'})
+
+    expect(res.status).toBe(401)
+    expect(res.body.error).toBe('Invalid email or password')
+})
+test('POST /auth/login returns 401 for an unknown email', async () =>  {
+    const res = await request(app).post('/auth/login').send({email: 'taha@exampe.com', password: 'Secret123'})
+
+    expect(res.status).toBe(401)
+    expect(res.body.error).toBe('Invalid email or password')
+})
+test('POST /auth/login returns 400 for a field is missing', async () =>  {
+    const res = await request(app).post('/auth/login').send({ password: 'Secret123'})
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('Email and password are required')
+})
+
+
 test('GET /habits returns the list of habits', async () => {
     await request(app).post('/habits').send({ title: 'habit2'})
 
