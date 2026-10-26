@@ -42,11 +42,17 @@ test('POST /auth/register returns 400 for missing user information', async () =>
     expect(res.status).toBe(400)
     expect(res.body.error).toBe('Username, email, and password are required')
 })
-test('POST /auth/register returns 400 for not allowed password', async () => {
+test('POST /auth/register returns 400 for invalid password', async () => {
     const res = await request(app).post('/auth/register').send({ username:'berkay', email: 'berkay@example.com', password: 'berkay'})
     
     expect(res.status).toBe(400)
     expect(res.body.error).toBe('Password must be at least 8 characters')
+})
+test('POST /auth/register returns 400 for invalid email', async () => {
+    const res = await request(app).post('/auth/register').send({ username: 'berkay', email: 'berkay.com', password: 'Secret123'})
+    
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('Invalid email address')
 })
 test('GET /habits returns the list of habits', async () => {
     await request(app).post('/habits').send({ title: 'habit2'})

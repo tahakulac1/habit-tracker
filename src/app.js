@@ -32,6 +32,9 @@ app.post(`/auth/register`, async(req, res) => {
         if (password.length < 8) {
             return res.status(400).json({ error: 'Password must be at least 8 characters'})
         }
+        if (!email.includes('@')) {
+            return res.status(400).json({ error: 'Invalid email address'})
+        }
         const passwordHash = await bcrypt.hash(password, 10)
         const result = await pool.query(
             'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email',
