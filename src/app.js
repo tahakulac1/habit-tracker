@@ -6,11 +6,29 @@ const jwt = require('jsonwebtoken')
 const app = express()
 app.use(cors())
 app.use(express.json())
+
+function authenticate(req, res, next) {
+    const header = req.get('authorization')
+    if(!header) {
+        return res.status(401).json({error: 'Token is required'})
+    }
+    const token = header.split(' ')[1]
+    try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET)
+        req.userId = payload.userId
+        next()
+
+    } catch (err) {
+        return res.status(401).json({ error: 'Invalid or expired token'})
+    }
+    
+}
+
 app.get(`/`, (req,res) => {
     res.send(`Habit Tracker API`)
 })
 
-app.post(`/habits`, async(req, res) => {
+app.post(`/habits`, authenticate, async(req, res) => {
     try {
         const title = req.body.title
         const result = await pool.query(
@@ -76,7 +94,8 @@ app.post('/auth/login', async (req, res) => {
     }
 })
 
-app.get(`/habits`, async(req, res) => {
+
+app.get(`/habits`, authenticate, async(req, res) => {
     try {
         const result = await pool.query('SELECT * FROM habits')
         res.json(result.rows)
@@ -85,7 +104,7 @@ app.get(`/habits`, async(req, res) => {
         res.status(500).json({ error: 'db error'})
     }
 })
-app.get('/habits/:id', async(req,res) => {
+app.get('/habits/:id', authenticate, async(req,res) => {
     try {
         const id = parseInt(req.params.id)
         const result = await pool.query('SELECT * FROM habits WHERE id = $1', [id])
@@ -100,7 +119,7 @@ app.get('/habits/:id', async(req,res) => {
         res.status(500).json({ error: 'db error'})
     }
 })
-app.put(`/habits/:id`, async(req, res) => {
+app.put(`/habits/:id`, authenticate, async(req, res) => {
     try {
         const id = parseInt(req.params.id)
         const result = await pool.query(
@@ -116,7 +135,7 @@ app.put(`/habits/:id`, async(req, res) => {
         res.status(500).json({ error: 'db error'})
     }
 })
-app.delete('/habits/:id', async(req, res) => {
+app.delete('/habits/:id', authenticate, async(req, res) => {
     try {
         const id = parseInt(req.params.id)
         const result = await pool.query(

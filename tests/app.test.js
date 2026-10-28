@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require("../src/app");
 const { pool, initDB } = require('../src/db');
+let token 
 
 beforeAll(async () => {
     await initDB()
@@ -8,6 +9,10 @@ beforeAll(async () => {
 beforeEach(async () => {
     await pool.query('DELETE FROM habits')
     await pool.query('DELETE FROM users')
+
+    await request(app).post('/auth/register').send({ username: 'test', email: 'test@example.com', password: 'Secret123'})
+    const loginRes = await request(app).post('/auth/login').send({ email: 'test@example.com', password: 'Secret123'})
+    token = loginRes.body.token
 })
 afterAll(async () => {
     await pool.end()
@@ -21,7 +26,7 @@ test('GET / returns the API name', async () => {
  })
 
  test('POST /habits creates a habit', async () => {
-    const res = await request(app).post('/habits').send({ title: 'habit1' })
+    const res = await request(app).post('/habits').set('Authorization', `Bearer ${token}`).send({ title: 'habit1' })
 
     expect(res.status).toBe(201)
     expect(res.body.title).toBe('habit1')
@@ -97,9 +102,9 @@ test('POST /auth/login returns 400 for a field is missing', async () =>  {
 
 
 test('GET /habits returns the list of habits', async () => {
-    await request(app).post('/habits').send({ title: 'habit2'})
+    await request(app).post('/habits').set('Authorization', `Bearer ${token}`).send({ title: 'habit2'})
 
-    const res = await request(app).get('/habits')
+    const res = await request(app).get('/habits').set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(200)
     expect(res.body).toHaveLength(1)
@@ -108,54 +113,54 @@ test('GET /habits returns the list of habits', async () => {
 
 test('GET /habits/:id returns habit by id', async () => {
 
-    const created = await request(app).post('/habits').send({ title: 'habit3'})
-    const res = await request(app).get(`/habits/${created.body.id}`)
+    const created = await request(app).post('/habits').set('Authorization', `Bearer ${token}`).send({ title: 'habit3'})
+    const res = await request(app).get(`/habits/${created.body.id}`).set('Authorization', `Bearer ${token}`)
     
     expect(res.status).toBe(200)
     expect(res.body.title).toBe('habit3')
 })
 
 test('GET /habits/:id returns 404 for a missing habit', async () => {
-    const res = await request(app).get('/habits/99999999')
-
+    const res = await request(app).get('/habits/99999999').set('Authorization',`Bearer ${token}`)
+    
     expect(res.status).toBe(404)
     expect(res.body.error).toBe('Habit not found')
 })
 
 test('PUT /habits/:id changes the state of a habit by id', async () => {
-    const created = await request(app).post('/habits').send({ title: 'habit4'})
-    const res = await request(app).put(`/habits/${created.body.id}`)
+    const created = await request(app).post('/habits').set('Authorization', `Bearer ${token}`).send({ title: 'habit4'})
+    const res = await request(app).put(`/habits/${created.body.id}`).set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(200)
     expect(res.body.completed).toBe(true)
 })
 
 test('PUT /habits/:id returns 404 for a missing habit', async () => {
-    const res = await request(app).put('/habits/99999999')
+    const res = await request(app).put('/habits/99999999').set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(404)
     expect(res.body.error).toBe('Habit not found')
 })
 
 test('PUT /habits/:id toggles back to not completed when called twice', async () => {
-    const created = await request(app).post('/habits').send({ title: 'habit5'})
-    await request(app).put(`/habits/${created.body.id}`)
-    const res = await request(app).put(`/habits/${created.body.id}`)
+    const created = await request(app).post('/habits').set('Authorization', `Bearer ${token}`).send({ title: 'habit5'})
+    await request(app).put(`/habits/${created.body.id}`).set('Authorization', `Bearer ${token}`)
+    const res = await request(app).put(`/habits/${created.body.id}`).set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(200)
     expect(res.body.completed).toBe(false)
 })
 
 test('DELETE /habits/:id deletes habit by id', async () => {
-    const created = await request(app).post('/habits').send({title: 'habit6'})
-    const res = await request(app).delete(`/habits/${created.body.id}`)
+    const created = await request(app).post('/habits').set('Authorization', `Bearer ${token}`).send({title: 'habit6'})
+    const res = await request(app).delete(`/habits/${created.body.id}`).set('Authorization', `Bearer ${token}`)
     
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Habit deleted successfully')
 })
 
 test('DELETE /habits/:id returns 404 for a missing habit', async () => {
-    const res = await request(app).delete('/habits/9999999')
+    const res = await request(app).delete('/habits/9999999').set('Authorization', `Bearer ${token}`)
 
     expect(res.status).toBe(404)
     expect(res.body.error).toBe('Habit not found')
