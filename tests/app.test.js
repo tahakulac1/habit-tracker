@@ -99,6 +99,7 @@ test('POST /auth/login returns 400 for a field is missing', async () =>  {
     expect(res.status).toBe(400)
     expect(res.body.error).toBe('Email and password are required')
 })
+// End of tests of login
 
 
 test('GET /habits returns the list of habits', async () => {
@@ -164,4 +165,21 @@ test('DELETE /habits/:id returns 404 for a missing habit', async () => {
 
     expect(res.status).toBe(404)
     expect(res.body.error).toBe('Habit not found')
+})
+
+
+// Start of tests of auth middleware
+test('GET /habits returns 401 for missing token', async () => {
+    await request(app).post('/habits').set('Authorization', `Bearer ${token}`).send({title: 'habit7'})
+    const res = await request(app).get('/habits')
+
+    expect(res.status).toBe(401)
+    expect(res.body.error).toBe('Token is required')
+})
+test('GET /habits returns 401 for a fake token', async () => {
+    await request(app).post('/habits').set('Authorization', `Bearer ${token}`).send({title: 'habit8'})
+    const res = await request(app).get('/habits').set('Authorization', `Bearer abc123`)
+
+    expect(res.status).toBe(401)
+    expect(res.body.error).toBe('Invalid or expired token')
 })
